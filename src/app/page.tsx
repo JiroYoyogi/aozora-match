@@ -1,6 +1,16 @@
 "use client";
 import { useState } from "react";
 
+type Item = {
+  file: string;
+  author: string;
+  title: string;
+  url: string;
+  suggestion: string;
+  similarity: number;
+}
+type Status = "idle" | "searching" | "success" | "error";
+
 const feelingList = [
   "胸が締め付けられるような、切ない気持ちになりたい",
   "人の優しさや思いやりに触れて、心を温めたい",
@@ -15,11 +25,72 @@ const feelingList = [
 
 export default function Home() {
   const [feeling, setFeeling] = useState(feelingList[0]);
+  const [suggestions, setSuggestions] = useState<Item[]>([]);
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  console.log(feeling);
+  const doSearch = async () => {
+
+    setStatus("searching");
+    setErrorMessage("");
+
+    try {
+      // Step1: ユーザーの気分をEmbedding
+      const embedRes = await fetch("/api/embed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feeling }),
+      });
+
+      const embedResJson = await embedRes.json();
+
+      if (!embedRes.ok) {
+        throw new Error(embedResJson.error || `API Error (${embedRes.status})`);
+      }
+
+      const embedding = embedResJson.embedding;
+
+      // Step2: Embeddingで類似作品を取得
+      const recRes = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embedding, limit: 3 }),
+      });
+
+      const recResJson = await recRes.json();
+
+      if (!recRes.ok) {
+        throw new Error(recResJson.error || `API Error (${recRes.status})`);
+      }
+
+      const recommendations = recResJson.items;
+
+      // Step3: オススメ文を作成
+      const sugRes = await fetch("/api/suggest", {
+        method: "POST",
+        body: JSON.stringify({ feeling, recommendations }),
+      });
+      const sugResJson = await sugRes.json();
+
+      if (!sugRes.ok) {
+        throw new Error(sugResJson.error || `API Error (${sugRes.status})`);
+      }
+
+      const suggestions = sugResJson.suggestions;
+      setSuggestions(suggestions);
+
+      setStatus("success");
+
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "Unknown error");
+    }
+    
+  }
 
   return (
-    <div className="font-sans min-h-screen pt-20">
+    <div className="font-sans min-h-screen py-20">
+
       <div className="flex flex-col gap-[32px] items-center">
         <h1 className="font-bold">本を読んでどんな気持ちになりたいですか？</h1>
         <select
@@ -30,14 +101,48 @@ export default function Home() {
             <option key={key}>{item}</option>
           ))}
         </select>
-        <button className="btn-recommend text-sm">オススメを探す</button>
+        <button 
+          className="btn-recommend text-sm" 
+          onClick={doSearch}
+          disabled={status === "searching"}
+        >
+          オススメを探す
+        </button>
+      </div>
+      
+      <p className="text-center pt-8 leading-relaxed">
+        {
+          status === "searching" ? <span className="loading-dots">オススメを検索中</span>:
+          status === "success" ? <span>次の３冊はいかがでしょうか？</span> :
+          status === "error" ? <span>エラーが発生しました。もう一度お試しください。</span> :
+          <span>気分にぴったりの本を、AIがあなたの代わりに探します。<br />気持ちを選んで「オススメを探す」ボタンを押してください。</span>
+        }
+      </p>
+
+      <div className="mt-8 w-[800px] mx-auto">
+
+        {
+          errorMessage && <p className="font-bold text-sm"> {errorMessage} </p>
+        }
+
+        <ul>
+          {
+            suggestions.map((item, key) => (
+              <li key={key} className="text-sm border-b-1 pb-4 mt-4">
+                <h2>
+                  <span className="font-bold text-lg">{ item.title }</span>
+                  <span className="ml-4 font-bold text-sm">{ item.author }</span>
+                </h2>
+                <p className="mt-4 leading-relaxed">{ item.suggestion }</p>
+                <p className="mt-4">
+                  <a href={ item.url }>{ item.url }</a>
+                </p>
+              </li>
+            ))
+          }
+        </ul>
       </div>
 
-      <div className="text-center pt-8 leading-relaxed">
-        <p>
-          気分にぴったりの本を、AIがあなたの代わりに探します。<br />気持ちを選んで「オススメを探す」ボタンを押してみてください。
-        </p>
-      </div>
     </div>
   );
 }
