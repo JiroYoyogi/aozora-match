@@ -31,54 +31,17 @@ export default function Home() {
 
   const doSearch = async () => {
 
+    console.log(feeling);
+
     setStatus("searching");
     setErrorMessage("");
 
     try {
-      // Step1: ユーザーの気分をEmbedding
-      const embedRes = await fetch("/api/embed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feeling }),
+      await new Promise<void>((reso) => {
+        setTimeout(() => {
+          reso();
+        }, 1000);
       });
-
-      const embedResJson = await embedRes.json();
-
-      if (!embedRes.ok) {
-        throw new Error(embedResJson.error || `API Error (${embedRes.status})`);
-      }
-
-      const embedding = embedResJson.embedding;
-
-      // Step2: Embeddingで類似作品を取得
-      const recRes = await fetch("/api/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ embedding, limit: 3 }),
-      });
-
-      const recResJson = await recRes.json();
-
-      if (!recRes.ok) {
-        throw new Error(recResJson.error || `API Error (${recRes.status})`);
-      }
-
-      const recommendations = recResJson.items;
-
-      // Step3: オススメ文を作成
-      const sugRes = await fetch("/api/suggest", {
-        method: "POST",
-        body: JSON.stringify({ feeling, recommendations }),
-      });
-      const sugResJson = await sugRes.json();
-
-      if (!sugRes.ok) {
-        throw new Error(sugResJson.error || `API Error (${sugRes.status})`);
-      }
-
-      const suggestions = sugResJson.suggestions;
-      setSuggestions(suggestions);
-
       setStatus("success");
 
     } catch (err) {
@@ -128,7 +91,7 @@ export default function Home() {
         <ul>
           {
             suggestions.map((item, key) => (
-              <li key={key} className="text-sm border-b-1 pb-4 mt-4">
+              <li key={key} className="text-sm border-b pb-4 mt-4">
                 <h2>
                   <span className="font-bold text-lg">{ item.title }</span>
                   <span className="ml-4 font-bold text-sm">{ item.author }</span>
