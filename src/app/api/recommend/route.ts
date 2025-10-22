@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
 
-// ✅ コサイン類似度を計算する関数
+// ベクトルがどれだけ同じ方向を向いているかを測る関数
+// -1 ~ 1。1に近いほど意味が近い
 function cosineSimilarity(vecA: number[], vecB: number[]): number {
   const dot = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -11,9 +12,9 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 
 export async function POST(req: Request) {
   try {
-    const { embedding, limit = 5 } = await req.json();
+    const { embedding, limit = 3 } = await req.json();
     if (!embedding || !Array.isArray(embedding)) {
-      return new Response(JSON.stringify({ error: "Invalid embedding" }), { status: 400 });
+      throw new Error("Invalid embedding");
     }
 
     // JSONファイル群を読み込み
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       })
     );
 
-    // 類似度を計算
+        // 類似度を計算
     const results = allData
       .map((item) => ({
         ...item,
@@ -39,13 +40,15 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ items: results }, null, 2), {
       headers: { "Content-Type": "application/json" },
     });
+
   } catch (err) {
-    console.error("❌ Error:", err);
+    // エラー系
+    console.error("❌ Error in /api/recommend:", err);
+    let errMessage = "Unknown error";
     if (err instanceof Error) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    } else {
-      return new Response(JSON.stringify({ error: "Unknown error" }), { status: 500 });
+      errMessage = err.message;
     }
+    return new Response(JSON.stringify({ error: errMessage }), { status: 500 });
     
   }
 }
