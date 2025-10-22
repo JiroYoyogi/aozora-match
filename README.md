@@ -100,7 +100,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 
 # Step3: オススメ文を作成
 
-- api/suggest/route.ts
+- page.tsx
 
 ```tsx
       // Step3: オススメ文を作成
@@ -118,7 +118,9 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
       setSuggestions(suggestions);
 ```
 
-- ユーザーの気分に合わせてオススメ文を作成
+- api/suggest/route.ts
+
+ユーザーの気分に合わせてオススメ文を作成
 
 （システムプロンプト）
 
@@ -144,7 +146,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 `;
 ```
 
-- ３件のオススメを作成
+３件のオススメを作成
 
 ```ts
 import OpenAI from "openai";
