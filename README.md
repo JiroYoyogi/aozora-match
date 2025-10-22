@@ -118,9 +118,9 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
       setSuggestions(suggestions);
 ```
 
-ユーザーの気分に合わせてオススメ文を作成
+- ユーザーの気分に合わせてオススメ文を作成
 
-- システムプロンプト
+（システムプロンプト）
 
 ```ts
     const systemPrompt = `
@@ -130,7 +130,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 `;
 ```
 
-- ユーザープロンプト
+（ユーザープロンプト）
 
 ```ts
     const userMessage = `
@@ -144,7 +144,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 `;
 ```
 
-上位３件のオススメを作成
+- ３件のオススメを作成
 
 ```ts
 import OpenAI from "openai";
