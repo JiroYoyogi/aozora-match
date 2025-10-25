@@ -19,7 +19,8 @@ export async function POST(req: Request) {
       })
     );
 
-    const results = allData.slice(0, limit);
+    const results = allData
+      .slice(0, limit);
 
     return new Response(JSON.stringify({ items: results }, null, 2), {
       headers: { "Content-Type": "application/json" },
