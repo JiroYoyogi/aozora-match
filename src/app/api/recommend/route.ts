@@ -1,15 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
 
-// ベクトルがどれだけ同じ方向を向いているかを測る関数
-// -1 ~ 1。1に近いほど意味が近い
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  const dot = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-  const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-  const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  return dot / (normA * normB);
-}
-
 export async function POST(req: Request) {
   try {
     const { embedding, limit = 3 } = await req.json();
@@ -28,14 +19,7 @@ export async function POST(req: Request) {
       })
     );
 
-        // 類似度を計算
-    const results = allData
-      .map((item) => ({
-        ...item,
-        similarity: cosineSimilarity(embedding, item.embedding),
-      }))
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, limit);
+    const results = allData.slice(0, limit);
 
     return new Response(JSON.stringify({ items: results }, null, 2), {
       headers: { "Content-Type": "application/json" },
